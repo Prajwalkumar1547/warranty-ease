@@ -18,6 +18,8 @@ export const BRAND_REGISTRY = {
   microsoft: { name: 'Microsoft', domain: 'microsoft.com', category: 'Computers', color: '#0078d4' },
   logitech: { name: 'Logitech', domain: 'logitech.com', category: 'Computers', color: '#005bac' },
   dyson: { name: 'Dyson', domain: 'dyson.com', category: 'Home Appliances', color: '#b5006e' },
+  emma: { name: 'Emma Sleep', domain: 'emma-sleep.in', category: 'Furniture', color: '#1e3a8a' },
+  'emma sleep': { name: 'Emma Sleep', domain: 'emma-sleep.in', category: 'Furniture', color: '#1e3a8a' },
   lg: { name: 'LG', domain: 'lg.com', category: 'Home Appliances', color: '#a50034' },
   bosch: { name: 'Bosch', domain: 'bosch.com', category: 'Home Appliances', color: '#005691' },
   whirlpool: { name: 'Whirlpool', domain: 'whirlpool.com', category: 'Home Appliances', color: '#ffb800' },
