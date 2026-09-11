@@ -1,12 +1,12 @@
 import React, { useState, useRef, useCallback } from 'react';
 import {
   X, FileScan, Sparkles, Upload, ShieldCheck, Edit3,
-  Loader2, Award, AlertTriangle, BellRing, CheckCircle2,
-  Check, RefreshCw, FileText, Info, AlertCircle, Wifi,
-  ChevronRight, Eye, WifiOff
+  Loader2, AlertTriangle, BellRing,
+  Check, RefreshCw, FileText, Info, AlertCircle,
+  Eye, WifiOff
 } from 'lucide-react';
 import { calculateWarrantyExpiry, validateBrandModelConsistency } from '../utils/warrantyCalculator';
-import { runOCR, analyzeWarranty, checkBackendHealth } from '../utils/ocrClient';
+import { runOCR, analyzeWarranty } from '../utils/ocrClient';
 import BrandLogo from './BrandLogo';
 
 // ─── Stage constants ────────────────────────────────────────
@@ -83,7 +83,7 @@ function ScanProgress({ stage }) {
 }
 
 // ─── Backend offline warning ──────────────────────────────────
-function BackendOfflineBanner({ onDismiss }) {
+function BackendOfflineBanner() {
   return (
     <div style={{ background: '#fffbeb', border: '1.5px solid #fcd34d', borderRadius: '0.85rem', padding: '1.25rem 1.5rem', marginBottom: '1.25rem' }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
