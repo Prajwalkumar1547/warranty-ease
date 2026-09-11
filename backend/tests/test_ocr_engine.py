@@ -83,12 +83,31 @@ def test_price_not_fabricated():
     price, conf = detect_price(text)
     assert price is None  # Must not fabricate a price
 
+def test_emma_mattress_parse():
+    emma_text = """TAX INVOICE
+SELLER: EMMA SLEEP INDIA PVT. LTD. (BLRFC12)
+Invoice Number: *CKA1-2526-13872*
+Invoice Date : 2025-10-10
+BILLED TO
+P Srishailam
+Description Of Goods / Services: Emma Hybrid Mattress - King / 6 in / 78" x 72" in
+SKU: EMAHE183200AAF
+Invoice Value: 16366.01
+Official 10-Year Manufacturer Mattress Warranty Included"""
+    result = parse_warranty_fields(emma_text, "emma_invoice.pdf")
+    assert result["brand"] == "Emma Sleep", f"Expected Emma Sleep, got {result['brand']}"
+    assert result["serial_number"] == "EMAHE183200AAF", f"Expected EMAHE183200AAF, got {result['serial_number']}"
+    assert result["purchase_date"] == "2025-10-10", f"Expected 2025-10-10, got {result['purchase_date']}"
+    assert result["purchase_price"] == 16366.01, f"Expected 16366.01, got {result['purchase_price']}"
+    assert result["warranty_period_months"] == 120, f"Expected 120 months, got {result['warranty_period_months']}"
+
 if __name__ == "__main__":
     tests = [
         test_brand_detection, test_serial_detection, test_date_detection,
         test_price_detection, test_invoice_number, test_model_number,
-        test_warranty_period, test_full_parse, test_missing_fields_flagged,
-        test_invalid_date_not_fabricated, test_price_not_fabricated,
+        test_warranty_period, test_full_parse, test_emma_mattress_parse,
+        test_missing_fields_flagged, test_invalid_date_not_fabricated,
+        test_price_not_fabricated,
     ]
     passed = 0
     failed = 0
@@ -106,3 +125,4 @@ if __name__ == "__main__":
     print(f"\n{passed} passed, {failed} failed out of {len(tests)} tests.")
     if failed > 0:
         sys.exit(1)
+
