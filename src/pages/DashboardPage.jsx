@@ -7,7 +7,8 @@ import {
   FileText,
   Plus,
   Sparkles,
-  FileScan
+  FileScan,
+  PackageCheck
 } from 'lucide-react';
 import StatCard from '../components/StatCard';
 import WarrantyCard from '../components/WarrantyCard';
