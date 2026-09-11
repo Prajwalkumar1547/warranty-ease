@@ -10,6 +10,7 @@ Endpoints:
 Run: uvicorn main:app --reload --port 8000
 """
 
+import re
 import os
 import io
 import logging
@@ -33,27 +34,38 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title="WarrantyEase OCR API",
     version="1.0.0",
-    description="Real PaddleOCR + AI warranty document analyzer"
+    description="Production PaddleOCR + AI warranty document analyzer"
 )
 
-# ─── CORS ────────────────────────────────────────────────────
-origins_raw = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000")
-allowed_origins = [o.strip() for o in origins_raw.split(",")]
+# ─── CORS (Production Ready) ──────────────────────────────────
+# Default permits localhost + any GitHub Pages or custom domain
+origins_raw = os.getenv("ALLOWED_ORIGINS", "")
+if origins_raw.strip():
+    allowed_origins = [o.strip() for o in origins_raw.split(",") if o.strip()]
+else:
+    allowed_origins = [
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:3000",
+    ]
 
+# Support regex for any GitHub Pages deploy (e.g. https://*.github.io) and allow_origins
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
+    allow_origin_regex=r"^https://.*\.github\.io$|^https://.*\.pages\.dev$|^https://.*\.vercel\.app$|^https://.*\.netlify\.app$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# ─── Constants ───────────────────────────────────────────────
+# ─── Constants & Safety Limits ───────────────────────────────
 MAX_FILE_SIZE_MB = float(os.getenv("OCR_MAX_FILE_SIZE_MB", "10"))
 MAX_FILE_SIZE_BYTES = int(MAX_FILE_SIZE_MB * 1024 * 1024)
 ALLOWED_CONTENT_TYPES = {
     "image/jpeg", "image/jpg", "image/png", "image/webp",
-    "application/pdf",
+    "application/pdf", "application/octet-stream"
 }
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".pdf"}
 
@@ -64,41 +76,66 @@ class AnalyzeRequest(BaseModel):
     extracted_fields: dict
 
 
-# ─── Helpers ─────────────────────────────────────────────────
-def validate_file(file: UploadFile, content: bytes):
-    """Validate file type and size."""
-    ext = ""
-    if file.filename and "." in file.filename:
-        ext = "." + file.filename.rsplit(".", 1)[-1].lower()
+# ─── Safe File Handling Helpers ───────────────────────────────
+def sanitize_filename(filename: Optional[str]) -> str:
+    """Sanitize uploaded filename to prevent path traversal or special char injection."""
+    if not filename:
+        return "document"
+    # Keep only the basename, strip directory traversal
+    clean = os.path.basename(filename)
+    # Remove null bytes and control characters
+    clean = re.sub(r'[\x00-\x1f\x7f]', '', clean)
+    # Replace non-safe chars with underscore
+    clean = re.sub(r'[^a-zA-Z0-9._-]', '_', clean)
+    return clean[:100] or "document"
 
-    if ext not in ALLOWED_EXTENSIONS and file.content_type not in ALLOWED_CONTENT_TYPES:
+
+async def read_limited_file(file: UploadFile, max_bytes: int) -> bytes:
+    """Safely stream upload file up to max_bytes without unbounded memory consumption."""
+    chunks = []
+    total = 0
+    chunk_size = 1024 * 1024  # 1MB chunk
+    while True:
+        chunk = await file.read(chunk_size)
+        if not chunk:
+            break
+        total += len(chunk)
+        if total > max_bytes:
+            raise HTTPException(
+                status_code=413,
+                detail=f"File exceeds maximum allowed size ({max_bytes // (1024*1024)} MB)."
+            )
+        chunks.append(chunk)
+    return b"".join(chunks)
+
+
+def validate_file(filename: str, content_type: str, content_length: int):
+    """Validate file extension, type, and non-empty status."""
+    ext = ("." + filename.rsplit(".", 1)[-1].lower()) if "." in filename else ""
+
+    if ext not in ALLOWED_EXTENSIONS and content_type not in ALLOWED_CONTENT_TYPES:
         raise HTTPException(
             status_code=415,
-            detail=f"Unsupported file type '{ext or file.content_type}'. "
+            detail=f"Unsupported file type '{ext or content_type}'. "
                    f"Accepted: JPG, JPEG, PNG, PDF."
         )
 
-    if len(content) > MAX_FILE_SIZE_BYTES:
-        raise HTTPException(
-            status_code=413,
-            detail=f"File too large ({len(content) // (1024*1024)} MB). "
-                   f"Maximum allowed: {MAX_FILE_SIZE_MB} MB."
-        )
-
-    if len(content) < 100:
-        raise HTTPException(status_code=400, detail="File appears to be empty or corrupted.")
+    if content_length < 20:
+        raise HTTPException(status_code=400, detail="Uploaded file appears empty or corrupted.")
 
 
 # ─── Routes ──────────────────────────────────────────────────
 
 @app.get("/health")
 async def health_check():
-    """Simple health check — confirms service is running."""
+    """Health check confirms API is responsive and ready."""
     return {
         "status": "ok",
         "service": "WarrantyEase OCR API",
         "version": "1.0.0",
         "ai_provider": os.getenv("AI_PROVIDER", "none"),
+        "ocr_engine": "PaddleOCR + PyPdfium2",
+        "ready": True
     }
 
 
@@ -108,20 +145,19 @@ async def ocr_endpoint(file: UploadFile = File(...)):
     Upload a document (JPG, PNG, PDF).
     Returns: raw OCR text + structured warranty fields + field confidence scores.
     """
-    content = await file.read()
-
-    # Validate
-    validate_file(file, content)
-
-    filename = file.filename or "document"
+    # 1. Sanitize file name and stream bytes safely
+    filename = sanitize_filename(file.filename)
     content_type = file.content_type or "application/octet-stream"
+
+    content = await read_limited_file(file, MAX_FILE_SIZE_BYTES)
+    validate_file(filename, content_type, len(content))
 
     logger.info(f"OCR request: file={filename}, size={len(content)} bytes, type={content_type}")
 
     try:
         from ocr_engine import extract_text_from_file, parse_warranty_fields
 
-        # 1. Run OCR to get raw text
+        # 2. Run OCR to extract text
         raw_text = extract_text_from_file(content, filename, content_type)
 
         if not raw_text or len(raw_text.strip()) < 10:
