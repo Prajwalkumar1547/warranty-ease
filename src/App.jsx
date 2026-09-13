@@ -2,11 +2,17 @@ import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import DashboardPage from './pages/DashboardPage';
 import ProtectionsPage from './pages/ProtectionsPage';
+import InsurancePage from './pages/InsurancePage';
 import ClaimsPage from './pages/ClaimsPage';
+import AdminDashboardPage from './pages/AdminDashboardPage';
+import CompanyPortalPage from './pages/CompanyPortalPage';
+import NotificationsPage from './pages/NotificationsPage';
 import DocumentsPage from './pages/DocumentsPage';
 import SupportDirectoryPage from './pages/SupportDirectoryPage';
+import RepairsPage from './pages/RepairsPage';
 import ShopsPage from './pages/ShopsPage';
 import SettingsPage from './pages/SettingsPage';
+
 import AddProtectionModal from './components/AddProtectionModal';
 import AddBusinessProtectionModal from './components/AddBusinessProtectionModal';
 import FileClaimModal from './components/FileClaimModal';
@@ -18,42 +24,32 @@ import ProtectionDetailModal from './components/ProtectionDetailModal';
 import WarrantyEmailModal from './components/WarrantyEmailModal';
 import RetailerInvoiceLinkModal from './components/RetailerInvoiceLinkModal';
 import AgentCommandCenterModal from './components/AgentCommandCenterModal';
+import GoogleAuthModal from './components/GoogleAuthModal';
+import UnifiedAuthModal from './components/UnifiedAuthModal';
 
-import { INITIAL_PROTECTIONS } from './data/initialProtections';
-import { INITIAL_CLAIMS } from './data/initialClaims';
 import { checkForDuplicateProtection } from './utils/warrantyCalculator';
 import { scanProtectionsAndClaims } from './utils/reminderAgents';
+import { getStoredGoogleUser } from './utils/googleAuth';
+import { api } from './services/api';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [currentRole, setCurrentRole] = useState('customer'); // 'customer' | 'admin' | 'company'
+  const [activeCompanyId, setActiveCompanyId] = useState('comp-boat');
+  const [activeCompanyName, setActiveCompanyName] = useState('boAt');
 
-  const [protections, setProtections] = useState(() => {
-    const saved = localStorage.getItem('warranty_ease_protections');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      } catch (e) {
-        console.error('Failed to parse protections', e);
-      }
-    }
-    return INITIAL_PROTECTIONS;
-  });
+  const [protections, setProtections] = useState([]);
+  const [claims, setClaims] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const [claims, setClaims] = useState(() => {
-    const saved = localStorage.getItem('warranty_ease_claims');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      } catch (e) {
-        console.error('Failed to parse claims', e);
-      }
-    }
-    return INITIAL_CLAIMS;
-  });
+  // Unified Role & Brand Authentication Modal
+  const [isUnifiedAuthOpen, setIsUnifiedAuthOpen] = useState(false);
+  const [unifiedAuthTab, setUnifiedAuthTab] = useState('company');
+  const [unifiedAuthBrandId, setUnifiedAuthBrandId] = useState('comp-boat');
 
+  // Modals state
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [addModalInitialType, setAddModalInitialType] = useState('Warranty');
   const [isBusinessModalOpen, setIsBusinessModalOpen] = useState(false);
   const [isFileClaimModalOpen, setIsFileClaimModalOpen] = useState(false);
   const [isOcrModalOpen, setIsOcrModalOpen] = useState(false);
@@ -70,25 +66,60 @@ export default function App() {
   const [warrantyEmailBrand, setWarrantyEmailBrand] = useState(null);
   const [warrantyEmailClaim, setWarrantyEmailClaim] = useState(null);
   const [isRetailerModalOpen, setIsRetailerModalOpen] = useState(false);
+  const [user, setUser] = useState(getStoredGoogleUser);
+  const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
 
-  // Sync state to LocalStorage
+  // Initial Load from API / SQLite Database
   useEffect(() => {
-    localStorage.setItem('warranty_ease_protections', JSON.stringify(protections));
-  }, [protections]);
+    const initData = async () => {
+      setIsLoading(true);
+      try {
+        const [loadedProts, loadedClaims, u] = await Promise.all([
+          api.getProtections(),
+          api.getClaims(),
+          api.getCurrentUser(),
+        ]);
+        if (loadedProts) setProtections(loadedProts);
+        if (loadedClaims) setClaims(loadedClaims);
+        if (u?.role) {
+          setCurrentRole(u.role);
+          if (u.role === 'admin') setActiveTab('admin_dashboard');
+          else if (u.role === 'company') setActiveTab('company_portal');
+        }
+      } catch (err) {
+        console.warn('Backend offline, using client persistence:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    initData();
+  }, []);
 
-  useEffect(() => {
-    localStorage.setItem('warranty_ease_claims', JSON.stringify(claims));
-  }, [claims]);
-
-  // Active Multi-Agent alerts count
+  // Multi-Agent alerts count
   const agentAlerts = scanProtectionsAndClaims(protections, claims);
 
-  const handleAddProtection = (newProtection) => {
+  const handleSwitchRole = async (newRole, companyId = null, companyName = null) => {
+    setCurrentRole(newRole);
+    if (companyId) setActiveCompanyId(companyId);
+    if (companyName) setActiveCompanyName(companyName);
+
+    await api.switchRole(newRole, companyId, companyName);
+
+    if (newRole === 'admin') {
+      setActiveTab('admin_dashboard');
+    } else if (newRole === 'company') {
+      setActiveTab('company_portal');
+    } else {
+      setActiveTab('dashboard');
+    }
+  };
+
+  const handleAddProtection = async (newProtection) => {
     // Duplicate Protection Detection
     const duplicate = checkForDuplicateProtection(newProtection, protections);
     if (duplicate) {
       const confirmAdd = window.confirm(
-        `Possible duplicate protection detected!\n\nAn existing protection for "${duplicate.brand} ${duplicate.productName || duplicate.model}" (S/N: ${duplicate.serialNumber}) is already in your inventory.\n\nClick OK to add anyway, or Cancel to view existing protection.`
+        `Possible duplicate protection detected!\n\nAn existing protection for "${duplicate.brand} ${duplicate.productName || duplicate.model}" is already in your inventory.\n\nClick OK to add anyway, or Cancel to view existing protection.`
       );
       if (!confirmAdd) {
         setSelectedProtectionDetail(duplicate);
@@ -97,10 +128,12 @@ export default function App() {
     }
 
     setProtections((prev) => [newProtection, ...prev]);
+    await api.addProtection(newProtection);
   };
 
-  const handleDeleteProtection = (id) => {
+  const handleDeleteProtection = async (id) => {
     setProtections((prev) => prev.filter((p) => p.id !== id));
+    await api.deleteProtection(id);
   };
 
   const handleClearAllProtections = () => {
@@ -108,8 +141,9 @@ export default function App() {
     localStorage.removeItem('warranty_ease_protections');
   };
 
-  const handleAddClaim = (newClaim) => {
+  const handleAddClaim = async (newClaim) => {
     setClaims((prev) => [newClaim, ...prev]);
+    await api.createClaim(newClaim);
   };
 
   const handleDeleteClaim = (claimId) => {
@@ -143,6 +177,7 @@ export default function App() {
         setActiveTab={setActiveTab}
         onOpenAddModal={() => {
           setOcrPrefilledData(null);
+          setAddModalInitialType('Warranty');
           setIsAddModalOpen(true);
         }}
         onOpenFileClaimModal={() => {
@@ -155,39 +190,74 @@ export default function App() {
         }}
         onOpenOcrModal={() => setIsOcrModalOpen(true)}
         onOpenAgentCenter={() => setIsAgentCenterOpen(true)}
+        onOpenGoogleAuth={() => setIsGoogleModalOpen(true)}
+        onOpenUnifiedAuth={(tab = 'company', brandId = 'comp-boat') => {
+          setUnifiedAuthTab(tab);
+          if (brandId) setUnifiedAuthBrandId(brandId);
+          setIsUnifiedAuthOpen(true);
+        }}
+        user={user}
         alertCount={agentAlerts.length}
+        currentRole={currentRole}
+        activeCompanyId={activeCompanyId}
+        activeCompanyName={activeCompanyName}
+        onSwitchRole={handleSwitchRole}
       />
 
       <main className="main-content">
+        {/* Customer Dashboard */}
         {activeTab === 'dashboard' && (
           <DashboardPage
             protections={protections}
             claims={claims}
             onNavigateToProtections={() => setActiveTab('protections')}
+            onNavigateToInsurance={() => setActiveTab('insurance')}
+            onNavigateToClaims={() => setActiveTab('claims')}
             onOpenFileClaimModal={() => {
               setPrefilledClaimItem(null);
               setIsFileClaimModalOpen(true);
             }}
             onOpenFileClaimForItem={handleOpenFileClaimForItem}
             onSelectClaimTrack={(claim) => setSelectedClaimForTrack(claim)}
-            onOpenAddModal={() => {
+            onOpenAddWarrantyModal={() => {
               setOcrPrefilledData(null);
+              setAddModalInitialType('Warranty');
               setIsAddModalOpen(true);
             }}
-            onAddProtection={handleAddProtection}
-            onOpenBusinessModal={() => setIsBusinessModalOpen(true)}
+            onOpenAddInsuranceModal={() => {
+              setOcrPrefilledData(null);
+              setAddModalInitialType('Insurance');
+              setIsAddModalOpen(true);
+            }}
             onOpenOcrModal={() => setIsOcrModalOpen(true)}
-            onOpenAiClaimModal={() => setIsAiClaimModalOpen(true)}
             onSelectProtectionForDetail={(prot) => setSelectedProtectionDetail(prot)}
-            onOpenAgentCenter={() => setIsAgentCenterOpen(true)}
+            user={user}
           />
         )}
 
+        {/* Operator Admin Dashboard */}
+        {activeTab === 'admin_dashboard' && (
+          <AdminDashboardPage />
+        )}
+
+        {/* Partner Company Portal */}
+        {activeTab === 'company_portal' && (
+          <CompanyPortalPage
+            activeCompanyId={activeCompanyId}
+            onOpenUnifiedAuth={(tab = 'company') => {
+              setUnifiedAuthTab(tab);
+              setIsUnifiedAuthOpen(true);
+            }}
+          />
+        )}
+
+        {/* Warranties Page */}
         {activeTab === 'protections' && (
           <ProtectionsPage
-            protections={protections}
+            protections={protections.filter(p => p.protectionType !== 'Insurance')}
             onOpenAddModal={() => {
               setOcrPrefilledData(null);
+              setAddModalInitialType('Warranty');
               setIsAddModalOpen(true);
             }}
             onOpenBusinessModal={() => setIsBusinessModalOpen(true)}
@@ -199,6 +269,23 @@ export default function App() {
           />
         )}
 
+        {/* Dedicated Insurance Section (Section 11) */}
+        {activeTab === 'insurance' && (
+          <InsurancePage
+            protections={protections}
+            onOpenAddInsuranceModal={() => {
+              setOcrPrefilledData(null);
+              setAddModalInitialType('Insurance');
+              setIsAddModalOpen(true);
+            }}
+            onOpenOcrModal={() => setIsOcrModalOpen(true)}
+            onOpenFileClaimForItem={handleOpenFileClaimForItem}
+            onSelectProtectionForDetail={(prot) => setSelectedProtectionDetail(prot)}
+            onDeleteProtection={handleDeleteProtection}
+          />
+        )}
+
+        {/* Claims Page */}
         {activeTab === 'claims' && (
           <ClaimsPage
             claims={claims}
@@ -211,6 +298,15 @@ export default function App() {
           />
         )}
 
+        {/* In-App Notifications Page */}
+        {activeTab === 'notifications' && (
+          <NotificationsPage
+            onNavigateToWarranties={() => setActiveTab('protections')}
+            onNavigateToClaims={() => setActiveTab('claims')}
+          />
+        )}
+
+        {/* Documents Vault */}
         {activeTab === 'documents' && (
           <DocumentsPage
             protections={protections}
@@ -222,6 +318,7 @@ export default function App() {
           />
         )}
 
+        {/* Support Directory */}
         {activeTab === 'support' && (
           <SupportDirectoryPage
             protections={protections}
@@ -230,21 +327,35 @@ export default function App() {
           />
         )}
 
+        {/* Repairs */}
+        {activeTab === 'repairs' && (
+          <RepairsPage />
+        )}
+
+        {/* Shops & Deals */}
         {activeTab === 'shops' && (
           <ShopsPage onOpenRetailerModal={() => setIsRetailerModalOpen(true)} />
         )}
 
+        {/* Settings */}
         {activeTab === 'settings' && (
-          <SettingsPage protections={protections} claims={claims} />
+          <SettingsPage
+            protections={protections}
+            claims={claims}
+            user={user}
+            onOpenGoogleAuth={() => setIsGoogleModalOpen(true)}
+          />
         )}
       </main>
 
-      {/* Footer */}
-      <footer style={{ borderTop: '1px solid #e2e8f0', background: '#ffffff', padding: '1.5rem', textAlign: 'center', color: '#64748b', fontSize: '0.85rem' }}>
-        <p>© 2026 WarrantyEase Smart Protection Platform. All rights reserved.</p>
-      </footer>
-
       {/* Global Interactive Modals */}
+      <GoogleAuthModal
+        isOpen={isGoogleModalOpen}
+        onClose={() => setIsGoogleModalOpen(false)}
+        user={user}
+        onUserChange={(newUser) => setUser(newUser)}
+      />
+
       <AddProtectionModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
@@ -254,6 +365,7 @@ export default function App() {
           setIsOcrModalOpen(true);
         }}
         prefilledData={ocrPrefilledData}
+        initialProtectionType={addModalInitialType}
       />
 
       <AddBusinessProtectionModal
@@ -268,6 +380,10 @@ export default function App() {
         protections={protections}
         prefilledItem={prefilledClaimItem}
         onAddClaim={handleAddClaim}
+        onTrackClaim={(claim) => {
+          setSelectedClaimForTrack(claim);
+          setActiveTab('claims');
+        }}
       />
 
       <DirectChatModal
@@ -318,12 +434,21 @@ export default function App() {
         }}
       />
 
-      {/* Autonomous Multi-Agent Command Center Modal */}
       <AgentCommandCenterModal
         isOpen={isAgentCenterOpen}
         onClose={() => setIsAgentCenterOpen(false)}
         protections={protections}
         claims={claims}
+      />
+
+      <UnifiedAuthModal
+        isOpen={isUnifiedAuthOpen}
+        onClose={() => setIsUnifiedAuthOpen(false)}
+        initialTab={unifiedAuthTab}
+        preselectedBrandId={unifiedAuthBrandId}
+        onLoginSuccess={(role, companyId, companyName) => {
+          handleSwitchRole(role, companyId, companyName);
+        }}
       />
     </div>
   );
