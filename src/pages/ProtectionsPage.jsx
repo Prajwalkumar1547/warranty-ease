@@ -26,19 +26,42 @@ export default function ProtectionsPage({
       statusFilter === 'All Status' || (item.status || '').toLowerCase() === statusFilter.toLowerCase();
 
     let matchesType = true;
+    const catLower = (item.category || '').toLowerCase();
+    const typeLower = (item.protectionType || '').toLowerCase();
+    const prodLower = ((item.productName || '') + ' ' + (item.model || '')).toLowerCase();
+
     if (typeFilter === 'Warranties') {
       matchesType = item.protectionType === 'Warranty' || !item.protectionType;
     } else if (typeFilter === 'Insurance') {
-      matchesType = item.protectionType === 'Insurance' || item.protectionType === 'Insurance Policy' || (item.protectionType || '').toLowerCase().includes('insurance');
+      matchesType = typeLower.includes('insurance');
+    } else if (typeFilter === 'Health') {
+      matchesType = catLower.includes('health') || prodLower.includes('health') || prodLower.includes('mediclaim');
+    } else if (typeFilter === 'Term & Life') {
+      matchesType = catLower.includes('life') || prodLower.includes('life') || prodLower.includes('term');
+    } else if (typeFilter === 'Vehicle') {
+      matchesType = catLower.includes('vehicle') || catLower.includes('car') || prodLower.includes('car') || prodLower.includes('motor');
+    } else if (typeFilter === 'Travel') {
+      matchesType = catLower.includes('travel') || prodLower.includes('travel');
+    } else if (typeFilter === 'Device') {
+      matchesType = catLower.includes('device') || prodLower.includes('care+') || prodLower.includes('screen');
+    } else if (typeFilter === 'Jewellery') {
+      matchesType = catLower.includes('jewel') || prodLower.includes('gold') || prodLower.includes('diamond');
+    } else if (typeFilter === 'Business') {
+      matchesType = catLower.includes('business') || prodLower.includes('commercial');
+    } else if (typeFilter === 'Property') {
+      matchesType = catLower.includes('property') || catLower.includes('home');
     } else if (typeFilter !== 'All') {
-      matchesType = (item.category || '').toLowerCase().includes(typeFilter.toLowerCase());
+      matchesType = catLower.includes(typeFilter.toLowerCase());
     }
 
     return matchesSearch && matchesStatus && matchesType;
   });
 
   const warrantyCount = protections.filter(p => p.protectionType === 'Warranty' || !p.protectionType).length;
-  const insuranceCount = protections.filter(p => p.protectionType === 'Insurance' || p.protectionType === 'Insurance Policy' || (p.protectionType || '').toLowerCase().includes('insurance')).length;
+  const insuranceCount = protections.filter(p => (p.protectionType || '').toLowerCase().includes('insurance')).length;
+  const healthCount = protections.filter(p => (p.category || '').toLowerCase().includes('health')).length;
+  const lifeCount = protections.filter(p => (p.category || '').toLowerCase().includes('life') || ((p.productName || '') + ' ' + (p.model || '')).toLowerCase().includes('term')).length;
+  const vehicleCount = protections.filter(p => (p.category || '').toLowerCase().includes('vehicle') || (p.category || '').toLowerCase().includes('car')).length;
 
   return (
     <div>
@@ -72,14 +95,17 @@ export default function ProtectionsPage({
       {/* Category Pills */}
       <div className="category-pills" style={{ marginBottom: '1.25rem' }}>
         {[
-          { id: 'All', label: `All Protections (${protections.length})` },
+          { id: 'All', label: `All (${protections.length})` },
           { id: 'Warranties', label: `Warranties (${warrantyCount})` },
-          { id: 'Insurance', label: `Insurance Policies (${insuranceCount})` },
-          { id: 'Electronics', label: 'Electronics' },
-          { id: 'Vehicle', label: 'Vehicle' },
-          { id: 'Health', label: 'Health' },
-          { id: 'Home Appliances', label: 'Appliances' },
-          { id: 'Computers', label: 'Computers' }
+          { id: 'Insurance', label: `All Insurance (${insuranceCount})` },
+          { id: 'Health', label: `Health (${healthCount})` },
+          { id: 'Term & Life', label: `Term & Life (${lifeCount})` },
+          { id: 'Vehicle', label: `Vehicle (${vehicleCount})` },
+          { id: 'Travel', label: 'Travel' },
+          { id: 'Device', label: 'Device Protection' },
+          { id: 'Jewellery', label: 'Jewellery' },
+          { id: 'Business', label: 'Business' },
+          { id: 'Property', label: 'Home / Property' }
         ].map((cat) => (
           <button
             key={cat.id}
