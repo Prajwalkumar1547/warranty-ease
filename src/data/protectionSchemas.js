@@ -16,14 +16,19 @@ export const PROTECTION_TYPES = [
 ];
 
 export const WARRANTY_CATEGORIES = [
-  { id: 'electronics', name: 'Electronics & Gadgets', iconName: 'Smartphone', examples: 'Phones, tablets, cameras', popularBrands: ['Apple', 'Samsung', 'Sony', 'OnePlus', 'Google', 'Xiaomi', 'Vivo', 'Realme'] },
-  { id: 'computers', name: 'Computers & Laptops', iconName: 'Laptop', examples: 'Laptops, monitors, desktops', popularBrands: ['Apple', 'Dell', 'HP', 'Lenovo', 'Asus', 'Acer', 'Microsoft'] },
-  { id: 'audio', name: 'Audio & Wearables', iconName: 'Headphones', examples: 'Smart glasses, headphones, smartwatches, speakers', popularBrands: ['Meta', 'Lenskart', 'Apple', 'Sony', 'Bose', 'JBL', 'Sennheiser', 'boAt', 'Noise'] },
-  { id: 'appliances', name: 'Home Appliances', iconName: 'Tv', examples: 'Washing machine, AC, refrigerator', popularBrands: ['Samsung', 'LG', 'Bosch', 'Dyson', 'Whirlpool', 'Godrej', 'Haier', 'Voltas'] },
-  { id: 'kitchen', name: 'Kitchen Appliances', iconName: 'Utensils', examples: 'Microwave, mixer, coffee machine', popularBrands: ['Philips', 'Bosch', 'Panasonic', 'Prestige', 'Morphy Richards'] },
-  { id: 'furniture', name: 'Furniture', iconName: 'Sofa', examples: 'Sofa, table, office chair', popularBrands: ['IKEA', 'Godrej Interio', 'Urban Ladder', 'Pepperfry'] },
-  { id: 'tools', name: 'Tools & Equipment', iconName: 'Wrench', examples: 'Drill, machinery, power tools', popularBrands: ['Bosch', 'DeWalt', 'Makita', 'Stanley'] },
-  { id: 'other_warranty', name: 'Other Product', iconName: 'Package', examples: 'Any product not listed above', popularBrands: [] }
+  { id: 'mobiles', name: 'Mobiles', iconName: 'Smartphone', examples: 'Phones, tablets, cellular devices', popularBrands: ['Apple', 'Samsung', 'OnePlus', 'Google', 'Xiaomi', 'Vivo', 'Realme'] },
+  { id: 'computers', name: 'Computers', iconName: 'Laptop', examples: 'Laptops, monitors, desktops, MacBooks', popularBrands: ['Apple', 'Dell', 'HP', 'Lenovo', 'Asus', 'Acer', 'Microsoft'] },
+  { id: 'tv', name: 'TV', iconName: 'Tv', examples: 'Smart TVs, OLED, QLED, projectors', popularBrands: ['Samsung', 'LG', 'Sony', 'Xiaomi', 'TCL', 'OnePlus'] },
+  { id: 'audio', name: 'Audio', iconName: 'Headphones', examples: 'Headphones, earbuds, soundbars, Bluetooth speakers', popularBrands: ['Sony', 'Bose', 'JBL', 'Apple', 'Sennheiser', 'boAt', 'Noise'] },
+  { id: 'cameras', name: 'Cameras', iconName: 'Camera', examples: 'DSLR, mirrorless, lenses, action cameras, GoPro', popularBrands: ['Sony', 'Canon', 'Nikon', 'GoPro', 'Fujifilm', 'DJI'] },
+  { id: 'gaming', name: 'Gaming', iconName: 'Gamepad2', examples: 'PlayStation, Xbox, Nintendo Switch, handhelds, controllers', popularBrands: ['Sony', 'Microsoft', 'Nintendo', 'Razer', 'Logitech', 'Asus ROG'] },
+  { id: 'appliances', name: 'Appliances', iconName: 'Refrigerator', examples: 'Washing machine, AC, refrigerator, air purifier, vacuum', popularBrands: ['Samsung', 'LG', 'Bosch', 'Dyson', 'Whirlpool', 'Godrej', 'Haier', 'Voltas'] },
+  { id: 'kitchen', name: 'Kitchen', iconName: 'Utensils', examples: 'Microwave, mixer, air fryer, coffee maker, chimney', popularBrands: ['Philips', 'Bosch', 'Panasonic', 'Prestige', 'Morphy Richards', 'Bajaj'] },
+  { id: 'printers', name: 'Printers', iconName: 'Printer', examples: 'Inkjet, laser printer, all-in-one scanners', popularBrands: ['HP', 'Canon', 'Epson', 'Brother'] },
+  { id: 'wearables', name: 'Wearables', iconName: 'Watch', examples: 'Apple Watch, Galaxy Watch, fitness trackers, smart rings', popularBrands: ['Apple', 'Samsung', 'Garmin', 'Fitbit', 'Noise', 'boAt', 'Fire-Boltt'] },
+  { id: 'furniture', name: 'Furniture', iconName: 'Sofa', examples: 'Sofa, ergonomic chairs, motorized desks, beds', popularBrands: ['IKEA', 'Godrej Interio', 'Urban Ladder', 'Pepperfry', 'Sleepwell'] },
+  { id: 'tools', name: 'Tools', iconName: 'Wrench', examples: 'Drills, power tools, lawnmowers, pressure washers', popularBrands: ['Bosch', 'DeWalt', 'Makita', 'Stanley', 'Black+Decker'] },
+  { id: 'other_warranty', name: 'Other', iconName: 'Package', examples: 'Any physical product or gear not listed above', popularBrands: [] }
 ];
 
 export const INSURANCE_CATEGORIES = [
