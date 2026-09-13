@@ -9,6 +9,10 @@ echo "=================================================="
 echo "  WarrantyEase OCR Backend"
 echo "=================================================="
 
+mkdir -p "$SCRIPT_DIR/.cache/matplotlib" "$SCRIPT_DIR/.cache/paddle"
+export MPLCONFIGDIR="$SCRIPT_DIR/.cache/matplotlib"
+export PADDLE_HOME="$SCRIPT_DIR/.cache/paddle"
+
 # Create .env from example if missing
 if [ ! -f ".env" ]; then
   cp .env.example .env
@@ -24,9 +28,13 @@ fi
 # Activate venv
 source venv/bin/activate
 
-# Install / upgrade dependencies
-echo "→ Installing/updating Python dependencies..."
-pip install -q -r requirements.txt
+# Install / upgrade dependencies if needed
+if python -c "import fastapi, uvicorn, paddleocr, pypdfium2" &>/dev/null; then
+  echo "✓ Python dependencies verified in virtual environment."
+else
+  echo "→ Installing/updating Python dependencies..."
+  pip install -q -r requirements.txt || true
+fi
 
 echo ""
 echo "→ Running OCR field extraction tests..."
