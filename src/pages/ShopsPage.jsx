@@ -84,24 +84,48 @@ export default function ShopsPage() {
     <div>
       {/* Page Header Banner */}
       <div style={{
-        background: 'linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #3b82f6 100%)',
-        borderRadius: '1.5rem',
-        padding: '2.25rem',
+        background: 'linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #1e40af 100%)',
+        borderRadius: '1.25rem',
+        padding: '2rem 2.25rem',
         color: '#ffffff',
         marginBottom: '2rem',
-        boxShadow: '0 12px 32px rgba(30, 58, 138, 0.25)',
+        boxShadow: '0 10px 28px rgba(37, 99, 235, 0.25)',
         position: 'relative',
         overflow: 'hidden'
       }}>
-        <div style={{ position: 'absolute', right: '-40px', top: '-40px', width: 220, height: 220, background: 'radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%)', borderRadius: '50%' }} />
+        <div style={{ position: 'absolute', right: '-40px', top: '-40px', width: 220, height: 220, background: 'radial-gradient(circle, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 70%)', borderRadius: '50%' }} />
         <div style={{ position: 'relative', zIndex: 1 }}>
-          <span style={{ background: 'rgba(255,255,255,0.15)', color: '#60a5fa', fontSize: '0.75rem', fontWeight: 800, padding: '0.3rem 0.8rem', borderRadius: '20px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+          <span style={{
+            background: 'rgba(255, 255, 255, 0.2)',
+            border: '1px solid rgba(255, 255, 255, 0.35)',
+            color: '#ffffff',
+            fontSize: '0.75rem',
+            fontWeight: 800,
+            padding: '0.3rem 0.85rem',
+            borderRadius: '20px',
+            letterSpacing: '0.05em',
+            textTransform: 'uppercase'
+          }}>
             WarrantyEase Marketplace & Savings Hub
           </span>
-          <h1 style={{ fontSize: '2.1rem', fontWeight: 900, marginTop: '0.75rem', marginBottom: '0.5rem', letterSpacing: '-0.03em' }}>
+          <h1 style={{
+            fontSize: '2.1rem',
+            fontWeight: 900,
+            marginTop: '0.75rem',
+            marginBottom: '0.5rem',
+            letterSpacing: '-0.03em',
+            color: '#ffffff'
+          }}>
             Shops, Deals, Discounts & Authorized Service
           </h1>
-          <p style={{ opacity: 0.9, fontSize: '1rem', maxWidth: '720px', lineHeight: 1.5, margin: 0 }}>
+          <p style={{
+            color: '#f8fafc',
+            opacity: 0.95,
+            fontSize: '0.98rem',
+            maxWidth: '720px',
+            lineHeight: 1.5,
+            margin: 0
+          }}>
             Discover student discounts (UniDays & GitHub), daily gadget deals, instant exchange bonuses, and nearest authorized service centers with brand claim approval ratings.
           </p>
         </div>
