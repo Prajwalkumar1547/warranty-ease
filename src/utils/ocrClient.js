@@ -9,12 +9,41 @@
 const BACKEND_URL = import.meta.env.VITE_OCR_BACKEND_URL || 'http://localhost:8000';
 
 /**
+ * Robust fetch that tries BACKEND_URL (e.g. localhost), then 127.0.0.1, then relative proxy.
+ */
+async function fetchBackend(endpoint, options = {}) {
+  const candidates = [BACKEND_URL];
+  if (BACKEND_URL.includes('localhost')) {
+    candidates.push(BACKEND_URL.replace('localhost', '127.0.0.1'));
+  }
+  if (!candidates.includes('')) {
+    candidates.push(''); // relative URL via Vite dev proxy
+  }
+
+  let lastError = null;
+  for (const base of candidates) {
+    try {
+      const url = `${base}${endpoint}`;
+      const res = await fetch(url, options);
+      return res;
+    } catch (err) {
+      lastError = err;
+      if (err.name === 'TimeoutError' || err.name === 'AbortError') {
+        throw err;
+      }
+      // Continue to next candidate
+    }
+  }
+  throw lastError || new Error(`Could not connect to OCR backend at ${BACKEND_URL}`);
+}
+
+/**
  * Check if the OCR backend is reachable.
  * @returns {Promise<{ok: boolean, info?: object, error?: string}>}
  */
 export async function checkBackendHealth() {
   try {
-    const res = await fetch(`${BACKEND_URL}/health`, {
+    const res = await fetchBackend('/health', {
       method: 'GET',
       signal: AbortSignal.timeout(5000),
     });
@@ -59,7 +88,7 @@ export async function runOCR(file, onProgress) {
 
   let res;
   try {
-    res = await fetch(`${BACKEND_URL}/api/ocr`, {
+    res = await fetchBackend('/api/ocr', {
       method: 'POST',
       body: formData,
       signal: AbortSignal.timeout(120000), // 2 min timeout for slow first OCR
@@ -99,7 +128,7 @@ export async function runOCR(file, onProgress) {
 export async function analyzeWarranty(ocrText, extractedFields) {
   let res;
   try {
-    res = await fetch(`${BACKEND_URL}/api/analyze`, {
+    res = await fetchBackend('/api/analyze', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
