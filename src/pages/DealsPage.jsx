@@ -46,12 +46,12 @@ export default function DealsPage() {
 
   return (
     <div>
-      <div className="page-header">
+      <div className="page-header" style={{ marginBottom: '1.25rem' }}>
         <div>
-          <h1 className="page-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Tag size={28} color="#ea580c" /> Special Deals & Student Discounts
+          <h1 className="page-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.6rem' }}>
+            <Tag size={22} color="#ea580c" /> Deals & Discounts
           </h1>
-          <p className="page-description">Curated discounts, student benefits, and cashback offers to save big on warranty-eligible purchases.</p>
+          <p className="page-description">Best student discounts, electronics deals, and cashback offers to maximise savings on purchases.</p>
         </div>
       </div>
 
