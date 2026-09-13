@@ -26,7 +26,7 @@ import {
   N8nWorkflowAgent
 } from '../utils/reminderAgents';
 
-export default function SettingsPage({ protections = [], claims = [] }) {
+export default function SettingsPage({ protections = [], claims = [], user, onOpenGoogleAuth }) {
   const [userName, setUserName] = useState('Srishailam Potti');
   const [email, setEmail] = useState('srishailam.potti@gmail.com');
   const [phone, setPhone] = useState('+919866130006');
@@ -42,11 +42,15 @@ export default function SettingsPage({ protections = [], claims = [] }) {
   useEffect(() => {
     const cfg = getAgentConfig();
     setAgentConfigState(cfg);
-    if (cfg.customerName) setUserName(cfg.customerName);
-    if (cfg.emailAgent?.userEmail) setEmail(cfg.emailAgent.userEmail);
+    if (user?.name) setUserName(user.name);
+    else if (cfg.customerName) setUserName(cfg.customerName);
+
+    if (user?.email) setEmail(user.email);
+    else if (cfg.emailAgent?.userEmail) setEmail(cfg.emailAgent.userEmail);
+
     if (cfg.whatsappAgent?.userPhone) setPhone(cfg.whatsappAgent.userPhone);
     if (cfg.n8nIntegration?.webhookUrl) setN8nWebhookUrl(cfg.n8nIntegration.webhookUrl);
-  }, []);
+  }, [user]);
 
   const handleTestN8nWebhook = async () => {
     const sampleAlert = {
@@ -250,6 +254,52 @@ export default function SettingsPage({ protections = [], claims = [] }) {
           <span>{testNotice}</span>
         </div>
       )}
+
+      {/* GOOGLE ACCOUNT STATUS CARD */}
+      <div style={{ background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)', border: '1.5px solid #e2e8f0', borderRadius: '1rem', padding: '1.25rem 1.5rem', marginBottom: '1.75rem', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          {user?.picture ? (
+            <img src={user.picture} alt={user.name} style={{ width: 52, height: 52, borderRadius: '50%', border: '2px solid #2563eb', objectFit: 'cover' }} />
+          ) : (
+            <div style={{ width: 52, height: 52, borderRadius: '50%', background: '#f1f5f9', border: '1px solid #cbd5e1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <svg width="24" height="24" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+              </svg>
+            </div>
+          )}
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.15rem' }}>
+              <span style={{ fontWeight: 800, fontSize: '1.05rem', color: '#0f172a' }}>
+                {user ? user.name : 'Google Single Sign-On'}
+              </span>
+              <span style={{ background: '#dcfce7', color: '#15803d', fontSize: '0.68rem', fontWeight: 800, padding: '0.15rem 0.5rem', borderRadius: '12px' }}>
+                ✓ Verified Google Account
+              </span>
+            </div>
+            <div style={{ fontSize: '0.83rem', color: '#475569', fontWeight: 600 }}>
+              {user ? user.email : 'Click to connect your Google profile'}
+            </div>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={onOpenGoogleAuth}
+          className="btn btn-secondary"
+          style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.82rem', fontWeight: 700, borderColor: '#cbd5e1' }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+          </svg>
+          <span>{user ? 'Manage Google Account' : 'Sign in with Google'}</span>
+        </button>
+      </div>
 
       <form onSubmit={handleSave} className="empty-state-card" style={{ textAlign: 'left', alignItems: 'stretch', padding: '2rem', marginBottom: '2rem' }}>
         
