@@ -331,11 +331,15 @@ export default function AiClaimWriterModal({
           `Please process direct reimbursement of the admissible medical / claim amount to the policyholder's bank account on file.`;
       }
 
+      const config = getAgentConfig();
+      const insuredName = activeProtection.customerName || activeProtection.policyHolder || config.customerName || 'Policyholder';
+      const contactDetails = [config.customerPhone, config.customerEmail].filter(Boolean).join(' • ') || 'Contact on file with Insurer';
+
       return `${toneSubject}\n` +
         `TO: THE CLAIMS DESK / THIRD-PARTY ADMINISTRATOR (TPA)\n` +
         `COMPANY: ${insurerUpper} GENERAL / HEALTH INSURANCE\n\n` +
         `POLICY & INSURED PARTICULARS:\n` +
-        `• Insured Name / Beneficiary: Srishailam Potti\n` +
+        `• Insured Name / Beneficiary: ${insuredName}\n` +
         `• Insurance Plan: ${policyName}\n` +
         `• Policy Number / Member ID: ${policyNo}\n` +
         `• Insurer / TPA: ${activeProtection.brand}\n` +
@@ -354,8 +358,8 @@ export default function AiClaimWriterModal({
         `4. Insured KYC Documents & Bank Cancelled Cheque for Direct NEFT\n\n` +
         `${toneDirective}\n\n` +
         `Respectfully Submitted,\n` +
-        `Srishailam Potti\n` +
-        `Contact: +91 9866130006 • srishailam.potti@gmail.com`;
+        `${insuredName}\n` +
+        `Contact: ${contactDetails}`;
     }
 
     const brandUpper = (activeProtection.brand || 'MANUFACTURER').toUpperCase();
@@ -510,7 +514,7 @@ export default function AiClaimWriterModal({
       `*Claim For:* ${activeProtection.brand} ${activeProtection.productName || activeProtection.model}\n` +
       `*Policy / Serial No:* ${activeProtection.serialNumber || 'Recorded in Vault'}\n` +
       `*Category / Issue:* ${issueCategory}\n` +
-      `*Claimant:* ${config.customerName || 'Srishailam Potti'} (+91 9866130006)\n\n` +
+      `*Claimant:* ${activeProtection.customerName || activeProtection.policyHolder || config.customerName || 'Policyholder'}${config.customerPhone ? ` (${config.customerPhone})` : ''}\n\n` +
       `*Statement of Claim:*\n"${userRawDescription || 'Claim lodged under active coverage.'}"\n\n` +
       `*Target Support Desk:* ${effectiveRecipientEmail}\n` +
       `*Required Resolution:* 48-Hour SLA intake & assessment.\n` +
@@ -888,7 +892,7 @@ export default function AiClaimWriterModal({
                           type="text"
                           className="form-control"
                           style={{ fontSize: '0.82rem', padding: '0.4rem 0.6rem', background: '#f1f5f9' }}
-                          value="srishailam.potti@gmail.com"
+                          value={getAgentConfig()?.customerEmail || 'customer@warrantyease.com'}
                           readOnly
                         />
                       </div>
@@ -959,7 +963,7 @@ export default function AiClaimWriterModal({
                         </p>
                       </div>
                       <span style={{ fontSize: '0.7rem', background: '#dbeafe', color: '#1e40af', padding: '0.15rem 0.5rem', borderRadius: '10px', fontWeight: 800 }}>
-                        User CC: srishailam.potti@gmail.com
+                        User CC: {getAgentConfig()?.customerEmail || 'Registered Email'}
                       </span>
                     </div>
 
